@@ -3,6 +3,7 @@ import json
 
 from securefim.baseline import create_baseline
 from securefim.monitor import scan_directory
+from securefim.reporter import setup_logger, log_changes
 
 
 def create_parser():
@@ -67,6 +68,9 @@ def main():
             return
 
         results = scan_directory(args.directory, baseline)
+
+        logger = setup_logger()
+        log_changes(logger, results)
 
         print("\n=== SecureFIM Scan Results ===")
 
