@@ -2,7 +2,7 @@ import argparse
 import json
 
 from securefim.baseline import create_baseline
-from securefim.monitor import scan_directory
+from securefim.monitor import scan_directory, monitor_directory
 from securefim.reporter import setup_logger, log_changes, generate_report
 
 
@@ -42,6 +42,30 @@ def create_parser():
         "--baseline",
         default="baseline.json",
         help="Baseline file (default: baseline.json)"
+    )
+
+    monitor_parser = subparsers.add_parser(
+    "monitor",
+    help="Continuously monitor a directory"
+    )
+
+    monitor_parser.add_argument(
+        "--directory",
+        required=True,
+        help="Directory to monitor"
+    )
+
+    monitor_parser.add_argument(
+        "--baseline",
+        default="baseline.json",
+        help="Baseline file (default: baseline.json)"
+    )
+
+    monitor_parser.add_argument(
+        "--interval",
+        type=int,
+        default=10,
+        help="Scan interval in seconds (default: 10)"
     )
 
     return parser
@@ -93,6 +117,20 @@ def main():
             print(f"  - {file_path}")
 
         print(f"[+] Report saved to: report.json")
+
+    elif args.command == "monitor":
+        try:
+            with open(args.baseline, "r", encoding="utf-8") as file:
+                baseline = json.load(file)
+        except FileNotFoundError:
+            print(f"[!] Baseline file not found: {args.baseline}")
+            return
+
+        monitor_directory(
+            args.directory,
+            baseline,
+            args.interval
+        )
 
 
 if __name__ == "__main__":

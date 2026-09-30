@@ -1,3 +1,5 @@
+import time
+
 from pathlib import Path
 
 from securefim.hasher import calculate_sha256
@@ -42,3 +44,58 @@ def scan_directory(directory: str, baseline: dict) -> dict:
         "new": new_files,
         "deleted": deleted,
     }
+
+
+def monitor_directory(
+    directory: str,
+    baseline: dict,
+    interval: int = 10,
+):
+    """Continuously monitor a directory for integrity changes."""
+
+    print(f"[+] Monitoring: {directory}")
+    print(f"[+] Scan interval: {interval} seconds")
+    print("[+] Press Ctrl+C to stop.\n")
+
+    try:
+        while True:
+            results = scan_directory(directory, baseline)
+
+            has_changes = any(
+                results.values()
+            )
+
+            if has_changes:
+                print("\n[!] File integrity changes detected!")
+
+                for file_path in results["modified"]:
+                    print(f"[MODIFIED] {file_path}")
+
+                for file_path in results["new"]:
+                    print(f"[NEW] {file_path}")
+
+                for file_path in results["deleted"]:
+                    print(f"[DELETED] {file_path}")
+
+                # Update baseline so the same event isn't reported forever.
+                baseline = {
+                    **baseline,
+                }
+
+                for file_path in results["modified"]:
+                    baseline[file_path] = calculate_sha256(
+                        str(Path(directory) / file_path)
+                    )
+
+                for file_path in results["new"]:
+                    baseline[file_path] = calculate_sha256(
+                        str(Path(directory) / file_path)
+                    )
+
+                for file_path in results["deleted"]:
+                    baseline.pop(file_path, None)
+
+            time.sleep(interval)
+
+    except KeyboardInterrupt:
+        print("\n[+] Monitoring stopped.")
