@@ -10,3 +10,5 @@ logs/*
 baseline.json
 *.log
 .vscode/
+
+report.json

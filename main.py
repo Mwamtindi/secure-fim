@@ -3,7 +3,8 @@ import json
 
 from securefim.baseline import create_baseline
 from securefim.monitor import scan_directory
-from securefim.reporter import setup_logger, log_changes
+from securefim.reporter import setup_logger, log_changes, generate_report
+
 
 
 def create_parser():
@@ -72,6 +73,11 @@ def main():
         logger = setup_logger()
         log_changes(logger, results)
 
+        generate_report(
+        results,
+        args.directory
+        )
+
         print("\n=== SecureFIM Scan Results ===")
 
         print(f"\n[MODIFIED] {len(results['modified'])}")
@@ -85,6 +91,8 @@ def main():
         print(f"\n[DELETED] {len(results['deleted'])}")
         for file_path in results["deleted"]:
             print(f"  - {file_path}")
+
+        print(f"[+] Report saved to: report.json")
 
 
 if __name__ == "__main__":
