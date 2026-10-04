@@ -5,7 +5,22 @@ from securefim.baseline import create_baseline
 from securefim.monitor import scan_directory, monitor_directory
 from securefim.reporter import setup_logger, log_changes, generate_report
 
+def positive_integer(value):
+    """Validate that a CLI value is a positive integer."""
 
+    try:
+        number = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            "Value must be an integer."
+        )
+
+    if number < 1:
+        raise argparse.ArgumentTypeError(
+            "Value must be at least 1."
+        )
+
+    return number
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -63,9 +78,9 @@ def create_parser():
 
     monitor_parser.add_argument(
         "--interval",
-        type=int,
+        type=positive_integer,
         default=10,
-        help="Scan interval in seconds (default: 10)"
+        help="Scan interval in seconds (minimum:1, default: 10)"
     )
 
     return parser
