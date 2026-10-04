@@ -1,8 +1,8 @@
 import time
-
 from pathlib import Path
 
 from securefim.hasher import calculate_sha256
+from securefim.reporter import setup_logger, log_changes
 
 
 def scan_directory(directory: str, baseline: dict) -> dict:
@@ -27,14 +27,12 @@ def scan_directory(directory: str, baseline: dict) -> dict:
     new_files = []
     deleted = []
 
-    # Detect new and modified files
     for file_path, current_hash in current_files.items():
         if file_path not in baseline:
             new_files.append(file_path)
         elif baseline[file_path] != current_hash:
             modified.append(file_path)
 
-    # Detect deleted files
     for file_path in baseline:
         if file_path not in current_files:
             deleted.append(file_path)
@@ -53,6 +51,8 @@ def monitor_directory(
 ):
     """Continuously monitor a directory for integrity changes."""
 
+    logger = setup_logger()
+
     print(f"[+] Monitoring: {directory}")
     print(f"[+] Scan interval: {interval} seconds")
     print("[+] Press Ctrl+C to stop.\n")
@@ -61,9 +61,7 @@ def monitor_directory(
         while True:
             results = scan_directory(directory, baseline)
 
-            has_changes = any(
-                results.values()
-            )
+            has_changes = any(results.values())
 
             if has_changes:
                 print("\n[!] File integrity changes detected!")
@@ -77,11 +75,11 @@ def monitor_directory(
                 for file_path in results["deleted"]:
                     print(f"[DELETED] {file_path}")
 
-                # Update baseline so the same event isn't reported forever.
-                baseline = {
-                    **baseline,
-                }
+                # Log detected security events.
+                log_changes(logger, results)
 
+                # Update the in-memory baseline so the same
+                # event is not reported repeatedly.
                 for file_path in results["modified"]:
                     baseline[file_path] = calculate_sha256(
                         str(Path(directory) / file_path)
